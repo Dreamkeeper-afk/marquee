@@ -1,0 +1,13 @@
+services:
+  marquee:
+    build: .
+    container_name: marquee
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      DATA_DIR: /data
+    ports:
+      - "8484:8484"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

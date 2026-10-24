@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Marquee">
+<meta name="theme-color" content="#0F1115">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<link rel="icon" href="/static/icon-192.png">
+<title>Marquee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0F1115; --panel:#1A1D24; --panel2:#13161B; --line:#2A2E37; --text:#F2F2F0; --muted:#9AA0A6; --dim:#7C838B;
+  --accent:#E5A00D; --accent2:#F5C04A; --blue:#8CCBFF; --green:#7BE3A7; --red:#FF9AA2;
+  --safe-t: env(safe-area-inset-top); --safe-b: env(safe-area-inset-bottom); }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: var(--bg); color: var(--text);
+  font: 15px/1.45 Inter, system-ui, sans-serif; }
+a { color: var(--accent); } a:hover { color: var(--accent2); }
+button { font: inherit; color: inherit; cursor: pointer; }
+h1, h2 { font-family: Outfit, sans-serif; margin: 0; }
+.hidden { display: none !important; }
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; }      /* only the content scrolls */
+#view { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: calc(var(--safe-t) + 4px) 16px 16px;
+  -webkit-overflow-scrolling: touch; }
+nav { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); border-top: 1px solid #22262E; background: var(--panel2);
+  padding: 2px 4px max(calc(var(--safe-b) - 18px), 6px); }
+nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 46px;
+  font-size: 11px; text-decoration: none; color: var(--muted); position: relative; }
+nav a.on { color: var(--accent); }
+nav svg { width: 22px; height: 22px; }
+.badge { position: absolute; top: 2px; right: calc(50% - 20px); background: #E5484D; color: #fff; border-radius: 999px;
+  font-size: 10px; padding: 0 5px; min-width: 16px; text-align: center; }
+.top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.top img { width: 38px; height: 38px; border-radius: 11px; }
+.top .brand { font-family: Outfit, sans-serif; font-weight: 700; font-size: 24px; }
+.top .hi { margin-left: auto; color: var(--muted); font-size: 13px; }
+.search { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.search input { flex: 1; background: transparent; border: 0; outline: none; color: var(--text); font: inherit; font-size: 16px; }
+.search:focus-within { border-color: var(--accent); }
+.sec { margin-top: 20px; }
+.sec h2 { font-size: 18px; margin-bottom: 10px; }
+.recs { background: #171A21; border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+.recs h2 { display: flex; align-items: center; gap: 8px; }
+.row { display: grid; grid-auto-flow: column; grid-auto-columns: 31%; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.row::-webkit-scrollbar { display: none; }
+.card { text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.poster { aspect-ratio: 2/3; border-radius: 10px; background: #232733 center/cover no-repeat; display: flex; align-items: flex-end;
+  padding: 8px; font-family: Outfit, sans-serif; font-weight: 700; font-size: 13px; line-height: 1.15; overflow: hidden; }
+.poster.has { color: transparent; }
+.small { font-size: 12px; color: var(--muted); line-height: 1.3; }
+.list { display: flex; flex-direction: column; gap: 10px; }
+.item { display: flex; gap: 12px; align-items: center; background: var(--panel); border-radius: 12px; padding: 8px; text-decoration: none; color: var(--text); }
+.item .poster { width: 48px; flex: none; padding: 0; }
+.item .t { font-weight: 600; } .item .s { font-size: 13px; color: var(--muted); }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
+.tag { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: var(--line); }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+.btn { min-height: 46px; padding: 0 16px; border-radius: 12px; border: 0; background: var(--accent); color: #0F1115; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+.btn:hover { color: #0F1115; background: var(--accent2); }
+.btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); font-weight: 600; }
+.btn.wide { width: 100%; }
+.btn:disabled { opacity: .5; }
+.pill { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.p-wait { background: #3A3420; color: var(--accent2); } .p-ok { background: #1B3248; color: var(--blue); }
+.p-on { background: #173B26; color: var(--green); } .p-no { background: #3D2226; color: var(--red); }
+.hero { margin: calc(-4px - var(--safe-t)) -16px 0; height: 280px; background: #232733 center/cover no-repeat; position: relative; }
+.back { position: absolute; top: calc(var(--safe-t) + 12px); left: 14px; width: 44px; height: 44px; border-radius: 50%; background: #0F1115cc;
+  display: grid; place-items: center; color: var(--text); border: 0; }
+.tposter { position: absolute; left: 18px; bottom: -60px; width: 116px; aspect-ratio: 2/3; border-radius: 12px; border: 3px solid var(--bg);
+  background: #2E3240 center/cover no-repeat; }
+.meta { padding: 12px 0 0 132px; min-height: 64px; color: var(--muted); font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+.ver { display: flex; justify-content: space-between; background: var(--panel); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.empty { color: var(--muted); text-align: center; padding: 30px 10px; }
+.field, select, textarea { width: 100%; background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px; font: inherit; font-size: 16px; }
+.note { border-radius: 12px; padding: 12px 14px; text-align: left; font-size: 13px; line-height: 1.45; max-width: 420px; }
+#toast { position: fixed; left: 50%; bottom: calc(var(--safe-b) + 80px); transform: translateX(-50%); background: var(--panel);
+  border: 1px solid var(--line); padding: 10px 16px; border-radius: 999px; font-size: 14px; z-index: 9; max-width: 90%; text-align: center; }
+#signin { position: fixed; inset: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 32px;
+  gap: 14px; text-align: center; }
+#signin img.logo { width: 116px; height: 116px; border-radius: 28px; }
+</style>
+</head>
+<body>
+
+<div id="signin" class="hidden">
+  <img class="logo" src="/static/logo-256.png" alt="Marquee">
+  <h1 style="font-size:34px">Marquee</h1>
+  <p style="margin:0 0 8px;color:#C9CDD2;max-width:420px">Browse everything on the server, request what's missing, and get recommendations picked just for you.</p>
+  <button class="btn wide" id="plexSignIn" style="min-height:52px;font-size:16px;max-width:420px">Sign in with Plex</button>
+  <p class="small" id="signinMsg">Use the Plex account you watch with.</p>
+  <div class="note" style="background:#173B26;border:1px solid #24563A;color:#D6F5E2">
+    <strong style="color:#7BE3A7">✅ Marquee will never ask for your Plex login or password.</strong> Signing in always takes you to
+    Plex's own website (<strong>app.plex.tv</strong>) - you only ever type your details there. If anything that looks like Marquee asks
+    for your Plex email or password, don't enter it.
+  </div>
+  <div class="note" style="background:#1A1D24;border:1px solid #2A2E37;color:#C9CDD2">
+    <strong style="color:#F2F2F0">🔒 Heads up:</strong> when you sign in, Plex may show a red <strong style="color:#F2F2F0">"Security
+    Alert - Another device is attempting to sign in"</strong>, or email you that <strong style="color:#F2F2F0">Marquee</strong> signed in.
+    That's just the handshake between Plex and this server, checking that your account has access - it's safe to continue.
+    <img src="/static/plex-alert-example.jpg" alt="Example of Plex's Security Alert screen" style="width:100%;border-radius:8px;margin:10px 0 6px;display:block">
+    If you see it, let the server owner know.
+  </div>
+  <button class="btn ghost" id="loginReportBtn" style="min-height:40px;font-size:14px">Can't sign in? Report a problem</button>
+  <form id="loginReport" class="hidden" style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:8px;text-align:left">
+    <label class="small" for="lrName">Your name (optional)</label><input id="lrName" class="field" autocomplete="name">
+    <label class="small" for="lrContact">How to reach you (optional)</label><input id="lrContact" class="field">
+    <label class="small" for="lrText">What happened?</label>
+    <textarea id="lrText" rows="4" placeholder="e.g. Plex said my password was wrong, or the page didn't come back to Marquee"></textarea>
+    <button class="btn">Send report</button>
+  </form>
+</div>
+
+<div id="app" class="hidden">
+  <main id="view"></main>
+  <nav id="tabs" aria-label="Marquee">
+    <a href="#home" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a>
+    <a href="#requests" data-tab="requests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>My requests</a>
+    <a href="#approvals" data-tab="approvals" class="hidden" id="approvalsTab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg>Requests<span class="badge hidden" id="apBadge"></span></a>
+    <a href="#watching" data-tab="watching" class="hidden" id="watchTab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Watching<span class="badge hidden" id="watchBadge" style="background:#2E7D4F"></span></a>
+    <a href="#profile" data-tab="profile" id="profileTab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile</a>
+    <a href="#search" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Search</a>
+  </nav>
+</div>
+<div id="toast" class="hidden"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const V = () => $("view");
+let me = null;
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const img = (u, w = 300) => u ? `/img?w=${w}&u=${encodeURIComponent(u)}` : "";
+const loading = `<div class="empty">Loading…</div>`;
+function toast(t) { const e = $("toast"); e.textContent = t; e.classList.remove("hidden"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.add("hidden"), 2800); }
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { credentials: "same-origin", headers: { "Content-Type": "application/json" }, ...opts });
+  if (r.status === 401 && !path.startsWith("/api/auth/")) { showSignIn(); throw new Error("sign in"); }
+  return r;
+}
+
+/* ---------- sign in with Plex: always on Plex's own page ---------- */
+function showSignIn() { $("app").classList.add("hidden"); $("signin").classList.remove("hidden"); }
+$("plexSignIn").onclick = async () => {
+  $("plexSignIn").disabled = true;
+  try {
+    const cfg = await (await fetch("/api/auth/config")).json();
+    // the code comes from THIS phone, so Plex sees one device signing in (no "another device" warning)
+    const r = await fetch("https://plex.tv/api/v2/pins?strong=true", { method: "POST",
+      headers: { "Accept": "application/json", "X-Plex-Product": cfg.product, "X-Plex-Client-Identifier": cfg.clientId } });
+    const pin = await r.json();
+    location.href = "https://app.plex.tv/auth#?" + new URLSearchParams({ clientID: cfg.clientId, code: pin.code,
+      "context[device][product]": cfg.product, forwardUrl: location.origin + "/?pin=" + pin.id });
+  } catch (e) { $("signinMsg").textContent = "Couldn't reach Plex - check your connection and try again."; $("plexSignIn").disabled = false; }
+};
+async function finishSignIn(pin) {
+  $("signinMsg").textContent = "Signing you in…";
+  const r = await fetch("/api/auth/finish", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pin }) });
+  history.replaceState(null, "", "/#home");
+  if (!r.ok) { const e = await r.json().catch(() => ({})); $("signinMsg").textContent = e.error || "Sign-in didn't work - try again."; $("plexSignIn").disabled = false; return false; }
+  return true;
+}
+
+/* ---------- report a problem (sign-in screen and inside the app) ---------- */
+async function sendReport(body, done) {
+  try {
+    const r = await fetch("/api/report", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    toast(d.result || d.error || "Couldn't send - please try again in a minute.");
+    if (r.ok) done();
+  } catch { toast("Couldn't send - please try again in a minute."); }
+}
+$("loginReportBtn").onclick = () => { $("loginReport").classList.toggle("hidden"); $("lrText").focus(); };
+$("loginReport").onsubmit = (e) => {
+  e.preventDefault();
+  sendReport({ name: $("lrName").value, contact: $("lrContact").value, text: $("lrText").value + " [sign-in screen said: " + $("signinMsg").textContent + "]" },
+    () => { $("loginReport").classList.add("hidden"); $("lrText").value = ""; });
+};
+
+/* ---------- pieces ---------- */
+function posterCard(it, why) {
+  const p = img(it.thumb);
+  return `<a class="card" href="#title/${esc(it.key)}"><div class="poster ${p ? "has" : ""}" style="${p ? `background-image:url('${p}')` : ""}">${esc(it.title)}</div>
+    <div class="small">${esc(why ?? it.line ?? "")}</div></a>`;
+}
+function listItem(it, extra = "") {
+  const p = img(it.thumb, 120);
+  return `<a class="item" href="#title/${esc(it.key)}"><div class="poster ${p ? "has" : ""}" style="${p ? `background-image:url('${p}')` : ""}"></div>
+    <div style="min-width:0"><div class="t">${esc(it.title)}${it.year ? ` (${esc(it.year)})` : ""}</div><div class="s">${esc(it.line || (it.type === "show" ? "TV show" : "Movie"))}</div>${extra}</div></a>`;
+}
+function ago(ts) {
+  const s = Date.now() / 1000 - ts;
+  if (s < 120) return "just now";
+  if (s < 3600) return `${Math.round(s / 60)} min ago`;
+  if (s < 86400) return `${Math.round(s / 3600)} hour${Math.round(s / 3600) === 1 ? "" : "s"} ago`;
+  const d = Math.round(s / 86400);
+  return d === 1 ? "yesterday" : `${d} days ago`;
+}
+
+/* ---------- home ---------- */
+async function home() {
+  V().innerHTML = `<div class="top"><img src="/static/icon-192.png" alt=""><div class="brand">Marquee</div><div class="hi">Hi, ${esc(me.name)}</div></div>
+    <a href="#search" class="search" style="text-decoration:none;color:var(--muted)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Search movies &amp; shows</a>
+    <div id="homeBody">${loading}</div>`;
+  const d = await (await api("/api/home")).json();
+  let html = "";
+  if (d.recs.length) html += `<div class="sec recs"><h2>✨ Picked for you</h2><div class="row">${d.recs.map(r => posterCard(r, r.why)).join("")}</div></div>`;
+  if (d.releases.length) html += `<div class="sec"><h2>New releases</h2><div class="row">${d.releases.map(r => posterCard(r)).join("")}</div></div>`;
+  if (d.added.length) html += `<div class="sec"><h2>Recently added</h2><div class="list">${d.added.map(r => listItem(r)).join("")}</div></div>`;
+  $("homeBody").innerHTML = html || `<div class="empty">Can't reach the server right now - try again in a bit.</div>`;
+}
+
+/* ---------- search ---------- */
+let searchTimer = null;
+function search() {
+  V().innerHTML = `<label for="q" class="hidden">Search</label>
+    <div class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA0A6" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="q" placeholder="Search movies &amp; shows" autocomplete="off" enterkeyhint="search"></div>
+    <div class="small" style="margin-top:8px">Searches the server, plus IMDb for what isn't here yet.</div><div id="results"></div>`;
+  const q = $("q"); q.focus();
+  try { q.value = sessionStorage.getItem("q") || ""; } catch {}
+  const run = async () => {
+    const term = q.value.trim(); try { sessionStorage.setItem("q", term); } catch {}
+    if (term.length < 2) { $("results").innerHTML = ""; return; }
+    $("results").innerHTML = loading;
+    const d = await (await api("/api/search?q=" + encodeURIComponent(term))).json();
+    if (q.value.trim() !== term) return;
+    let html = "";
+    if (d.onPlex.length) html += `<div class="sec"><h2 style="font-size:16px"><span class="dot" style="background:#4CD18A"></span>On the server</h2><div class="list">${
+      d.onPlex.map(r => listItem(r, r.tags && r.tags.length ? `<div class="tags">${r.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : "")).join("")}</div></div>`;
+    if (d.notYet.length) html += `<div class="sec"><h2 style="font-size:16px"><span class="dot" style="background:#9AA0A6"></span>Not here yet</h2><div class="list">${
+      d.notYet.map((c, i) => `<div class="item"><div style="flex:1;min-width:0"><div class="t">${esc(c.title)}${c.year ? ` (${esc(c.year)})` : ""}</div>
+        <div class="s">${esc(c.kind)}</div><a class="small" href="${esc(c.url)}" target="_blank" rel="noopener" style="color:var(--accent)">View on IMDb</a></div>
+        <button class="btn" data-i="${i}">Request</button></div>`).join("")}</div></div>`;
+    $("results").innerHTML = html || `<div class="empty">Nothing found for "${esc(term)}".</div>`;
+    $("results").querySelectorAll("button[data-i]").forEach(b => b.onclick = () => request(d.notYet[+b.dataset.i], b));
+  };
+  q.oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(run, 350); };
+  if (q.value) run();
+}
+async function request(c, button) {
+  if (!me.owner && !confirm(`Request ${c.title}${c.year ? ` (${c.year})` : ""}?`)) return;
+  button.disabled = true; button.textContent = "Sending…";
+  const d = await (await api("/api/request", { method: "POST", body: JSON.stringify({ id: c.id, title: c.title, year: c.year }) })).json();
+  toast(d.result || d.error); button.textContent = ["pending", "approved"].includes(d.status) ? "Requested" : "Request";
+  button.disabled = ["pending", "approved"].includes(d.status);
+}
+
+/* ---------- title page ---------- */
+async function title(key) {
+  V().innerHTML = loading;
+  const r = await api("/api/title/" + encodeURIComponent(key));
+  if (!r.ok) { V().innerHTML = `<div class="empty">That title isn't on the server anymore.</div>`; return; }
+  const t = await r.json();
+  V().innerHTML = `<div class="hero" style="${t.art ? `background-image:url('${img(t.art, 900)}')` : ""}">
+      <button class="back" aria-label="Back" onclick="history.back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <div class="tposter" style="${t.thumb ? `background-image:url('${img(t.thumb)}')` : ""}"></div></div>
+    <div class="meta"><span class="pill p-on" style="align-self:flex-start">On the server</span><div>${[t.year, t.length, t.rating].filter(Boolean).map(esc).join(" · ")}</div></div>
+    <h1 style="font-size:28px;line-height:1.1;margin-top:18px">${esc(t.title)}</h1>
+    ${t.genres.length ? `<div class="small" style="margin-top:6px">${t.genres.map(esc).join(" · ")}</div>` : ""}
+    <p style="color:#C9CDD2;font-size:14px">${esc(t.summary)}</p>
+    ${t.versions.length ? `<h2 style="font-size:16px;margin:14px 0 8px">Versions</h2><div class="list">${t.versions.map(v =>
+      `<div class="ver"><span>${esc(v.label)}</span><span style="color:var(--muted)">${esc(v.res)}</span></div>`).join("")}</div>` : ""}
+    <div style="display:flex;gap:10px;margin-top:18px"><a class="btn" style="flex:1" href="${esc(t.play)}" target="_blank" rel="noopener">▶&#xFE0E; Play on Plex</a>
+    ${t.imdb ? `<a class="btn ghost" href="${esc(t.imdb)}" target="_blank" rel="noopener">IMDb</a>` : ""}</div>`;
+}
+
+/* ---------- my requests ---------- */
+const STATUS = { pending: ["Waiting", "p-wait"], approved: ["Approved", "p-ok"], available: ["Ready", "p-on"], declined: ["Declined", "p-no"] };
+async function requests() {
+  V().innerHTML = `<h1 style="font-size:26px">My requests</h1>
+    <div class="small" style="margin:6px 0 12px">Requests are usually reviewed within ${esc(me.reviewTime)}. You'll get a notification with the answer, and again when it's ready to watch.</div>
+    <a class="btn wide" href="#search">+ New request</a><div class="list" id="reqList" style="margin-top:14px">${loading}</div>`;
+  const items = await (await api("/api/requests")).json();
+  $("reqList").innerHTML = items.length ? items.map(r => {
+    const [label, cls] = STATUS[r.status] || ["", ""];
+    return `<div class="item" style="align-items:flex-start"><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:8px">
+      <div class="t">${esc(r.title)}</div><span class="pill ${cls}">${label}</span></div><div class="s">${esc(r.note)}</div>
+      <div class="small" style="color:var(--dim)">${new Date(r.at * 1000).toLocaleDateString()}</div>
+      ${["pending", "approved"].includes(r.status) ? `<button class="btn ghost" data-cancel="${esc(r.id)}" style="min-height:40px;margin-top:8px;font-size:14px">Cancel request</button>` : ""}</div></div>`;
+  }).join("") : `<div class="empty">No requests yet. Search for something that isn't here and tap Request.</div>`;
+  $("reqList").querySelectorAll("[data-cancel]").forEach(b => b.onclick = async () => {
+    if (!confirm("Cancel this request?")) return;
+    const d = await (await api("/api/requests/cancel", { method: "POST", body: JSON.stringify({ id: b.dataset.cancel }) })).json();
+    toast(d.result); requests();
+  });
+}
+
+/* ---------- owner: all requests ---------- */
+async function approvals() {
+  V().innerHTML = `<h1 style="font-size:26px">Requests</h1>
+    <form id="ownReq" style="display:flex;gap:8px;margin-top:12px"><label for="ownName" class="hidden">Movie or show</label>
+      <input id="ownName" class="field" placeholder="Add one by name" autocomplete="off" style="flex:1;min-width:0">
+      <button class="btn">Add</button></form><div class="small" style="margin-top:6px">Yours are approved straight away - just the name.</div>
+    <h2 style="font-size:17px;margin:20px 0 10px">Waiting for approval</h2><div class="list" id="apList">${loading}</div>
+    <h2 style="font-size:17px;margin:22px 0 10px">Approved - waiting to be added</h2><div class="list" id="waitList"></div>`;
+  $("ownReq").onsubmit = async (e) => {
+    e.preventDefault();
+    const name = $("ownName").value.trim(); if (!name) return;
+    const d = await (await api("/api/request", { method: "POST", body: JSON.stringify({ name }) })).json();
+    toast(d.result || d.error); approvals();
+  };
+  const d = await (await api("/api/all-requests")).json();
+  paintBadge(d.pending.length);
+  $("waitList").innerHTML = d.waiting.length ? "" : `<div class="empty">Nothing approved and waiting.</div>`;
+  for (const r of d.waiting) {
+    const el = document.createElement("div"); el.className = "item";
+    el.innerHTML = `<div style="flex:1;min-width:0"><div class="t">${esc(r.title)}</div><div class="s">${esc(r.owner ? "You" : r.name)}</div>
+      <div class="small" style="color:var(--dim)">approved ${new Date((r.approved_at || r.at) * 1000).toLocaleDateString()}</div></div>
+      <button class="btn ghost" style="min-height:44px">Mark complete</button>`;
+    el.querySelector("button").onclick = async () => {
+      toast((await (await api("/api/complete/" + r.id, { method: "POST" })).json()).result); el.remove();
+      if (!$("waitList").children.length) $("waitList").innerHTML = `<div class="empty">Nothing approved and waiting.</div>`;
+    };
+    $("waitList").appendChild(el);
+  }
+  const opts = Object.entries(d.reasons).map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join("");
+  $("apList").innerHTML = d.pending.length ? "" : `<div class="empty">Nothing waiting for you.</div>`;
+  for (const r of d.pending) {
+    const el = document.createElement("div"); el.className = "item"; el.style.cssText = "flex-direction:column;align-items:stretch";
+    el.innerHTML = `<div class="t">${esc(r.title)}</div><div class="s">from ${esc(r.name)} · ${new Date(r.at * 1000).toLocaleDateString()}</div>
+      ${r.imdb ? `<a class="small" href="https://www.imdb.com/title/${esc(r.imdb)}/" target="_blank" rel="noopener" style="color:var(--accent)">View on IMDb</a>` : ""}
+      <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1" data-a="yes">✅ Approve</button><button class="btn ghost" style="flex:1" data-a="no">❌ Decline</button></div>
+      <div class="hidden" data-decline style="margin-top:10px;display:flex;flex-direction:column;gap:8px"><label class="small">How should we let them down gently?
+        <select>${opts}<option value="custom">✏️ Write my own message</option></select></label>
+        <textarea class="hidden" rows="3" placeholder="Message to ${esc(r.name)}"></textarea><button class="btn">Send decline</button></div>`;
+    const decide = async (approve, reason, custom) => {
+      toast((await (await api("/api/approvals/" + r.id, { method: "POST", body: JSON.stringify({ approve, reason, custom }) })).json()).result);
+      approvals();
+    };
+    el.querySelector('[data-a="yes"]').onclick = () => decide(true);
+    el.querySelector('[data-a="no"]').onclick = () => el.querySelector("[data-decline]").classList.remove("hidden");
+    el.querySelector("select").onchange = (e) => el.querySelector("textarea").classList.toggle("hidden", e.target.value !== "custom");
+    el.querySelector("[data-decline] .btn").onclick = () => { const s = el.querySelector("select").value; decide(false, s, s === "custom" ? el.querySelector("textarea").value : ""); };
+    $("apList").appendChild(el);
+  }
+}
+function paintBadge(n) { $("apBadge").textContent = n; $("apBadge").classList.toggle("hidden", !n); }
+
+/* ---------- owner: who's watching ---------- */
+let watchTimer = null;
+async function watching() {
+  V().innerHTML = `<h1 style="font-size:26px">Who's watching</h1><div class="small" id="wSum" style="margin:6px 0 12px">Checking…</div><div class="list" id="wList"></div>`;
+  const paint = async () => {
+    if (!location.hash.startsWith("#watching")) { clearInterval(watchTimer); return; }
+    const list = await (await api("/api/watching")).json();
+    paintWatch(list.length);
+    $("wSum").textContent = list.length ? `${list.length} stream${list.length === 1 ? "" : "s"} right now` : "Nobody is watching right now.";
+    $("wList").innerHTML = list.map(w => {
+      const p = img(w.thumb, 120);
+      return `<div class="item" style="align-items:flex-start"><div class="poster ${p ? "has" : ""}" style="${p ? `background-image:url('${p}')` : ""}"></div>
+        <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><div class="t">${esc(w.user)}</div>
+          <span class="pill ${w.state === "paused" ? "p-wait" : "p-on"}">${w.state === "paused" ? "Paused" : "Playing"}</span></div>
+          <div class="s">${esc(w.title)}${w.type === "show" ? ` · ${esc(w.line)}` : (w.year ? ` (${esc(w.year)})` : "")}</div>
+          <div style="height:5px;background:#2A2E37;border-radius:3px;margin:8px 0 6px;overflow:hidden"><div style="height:100%;width:${w.progress}%;background:var(--accent)"></div></div>
+          <div class="small">${w.progress}% · ${w.left} min left · ${esc(w.device)}${w.remote ? " (away)" : ""}</div>
+          <div class="small">${esc(w.quality)} · ${esc(w.how)}${w.bandwidth ? ` · ${w.bandwidth} Mbps` : ""}</div></div></div>`;
+    }).join("");
+  };
+  clearInterval(watchTimer); watchTimer = setInterval(paint, 15000); paint();
+}
+function paintWatch(n) { $("watchBadge").textContent = n; $("watchBadge").classList.toggle("hidden", !n); }
+
+/* ---------- profile (owner: members) ---------- */
+function profile() {
+  const on = "Notification" in window && Notification.permission === "granted";
+  V().innerHTML = `<h1 style="font-size:26px">${me.owner ? "Members" : esc(me.name)}</h1>
+    <div class="small" style="margin:6px 0 18px">${me.owner ? `Signed in as ${esc(me.name)} · ${esc(me.server)}` : `Signed in with Plex · ${esc(me.server)}`}</div>
+    <div class="item" style="flex-direction:column;align-items:stretch;gap:8px"><div class="t">🔔 Notifications</div>
+      <div class="s">${me.owner ? "New requests, new members and problem reports." : "New movies and shows, and updates on your requests."}</div>
+      <button class="btn" id="pushOn">${on ? "Notifications are on" : "Turn on notifications"}</button>
+      <div class="small"><strong>iPhone:</strong> add Marquee to your Home Screen first (Safari → Share → Add to Home Screen), then open it from there.<br>
+        <strong>Android:</strong> in Chrome, tap ⋮ → Add to Home screen (or Install app) → Install.</div></div>
+    ${me.owner ? `<h2 style="font-size:17px;margin:22px 0 10px">In the app</h2><div class="list" id="people">${loading}</div>` : ""}
+    <div class="item" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:14px"><div class="t">🛠️ Report a problem</div>
+      <label class="small" for="rpText">Something not working? Tell us what happened.</label>
+      <textarea id="rpText" rows="3" placeholder="e.g. posters won't load, or a request is stuck"></textarea>
+      <button class="btn ghost" id="rpSend">Send report</button></div>
+    <button class="btn ghost wide" id="signOut" style="margin-top:18px">Sign out</button>`;
+  $("pushOn").onclick = turnOnPush;
+  $("rpSend").onclick = () => sendReport({ text: $("rpText").value }, () => { $("rpText").value = ""; });
+  $("signOut").onclick = async () => { await api("/api/auth/signout", { method: "POST" }); location.href = "/"; };
+  if (me.owner) api("/api/people").then(r => r.json()).then(d => {
+    const online = d.people.filter(p => p.online).length;
+    $("people").innerHTML = (d.people.length ? `<div class="small">${online} online now · ${d.people.length} in the app</div>` +
+      d.people.map(p => `<div class="item" style="align-items:flex-start"><div style="flex:1;min-width:0">
+        <div class="t"><span class="dot" style="background:${p.online ? "#4CD18A" : "#5A616B"}"></span>${esc(p.name)}</div>
+        ${p.username && p.username !== p.name ? `<div class="s">${esc(p.username)}</div>` : ""}
+        <div class="small">${p.online ? "Online now" : "Last used " + ago(p.last)} · joined ${new Date(p.first * 1000).toLocaleDateString()}</div></div>
+        <span class="pill p-ok">${p.requests} request${p.requests === 1 ? "" : "s"}</span></div>`).join("")
+      : `<div class="empty">Nobody has signed in yet.</div>`) +
+      (d.missing.length ? `<h2 style="font-size:17px;margin:20px 0 6px">Not in the app yet (${d.missing.length})</h2>
+        <div class="small" style="margin-bottom:6px">Shared on your server, but haven't signed in to Marquee.</div>` +
+        d.missing.map(m => `<div class="item"><div style="min-width:0"><div class="t">${esc(m.name)}</div>
+          ${m.username && m.username !== m.name ? `<div class="s">${esc(m.username)}</div>` : ""}</div></div>`).join("") : "") +
+      (d.reports.length ? `<h2 style="font-size:17px;margin:20px 0 6px">Problem reports</h2>` + d.reports.map(r =>
+        `<div class="item" style="flex-direction:column;align-items:stretch;gap:4px"><div class="t">${esc(r.name)}${r.contact ? ` · ${esc(r.contact)}` : ""}</div>
+          <div class="s">${esc(r.text)}</div><div class="small">${esc(r.where)} · ${esc(r.device)} · ${ago(r.at)}</div></div>`).join("") : "");
+  }).catch(() => {});
+}
+
+async function turnOnPush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return toast("Add Marquee to your Home Screen first, then open it from there.");
+  try {
+    if (await Notification.requestPermission() !== "granted") return toast("Notifications are blocked - allow them in Settings.");
+    const reg = await navigator.serviceWorker.ready;
+    const key = (await (await api("/api/push/key")).json()).key.replace(/-/g, "+").replace(/_/g, "/");
+    const raw = Uint8Array.from(atob(key + "=".repeat((4 - key.length % 4) % 4)), c => c.charCodeAt(0));
+    const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw }));
+    await api("/api/push/subscribe", { method: "POST", body: JSON.stringify(sub) });
+    toast("Notifications on"); profile();
+  } catch (e) { toast("Couldn't turn on notifications: " + e.message); }
+}
+
+/* ---------- routing ---------- */
+function route() {
+  const [page, arg] = (location.hash.slice(1) || "home").split("/");
+  document.querySelectorAll("#tabs a").forEach(a => a.classList.toggle("on", a.dataset.tab === page));
+  V().scrollTop = 0;
+  ({ home, search, requests, profile, approvals: me.owner ? approvals : home, watching: me.owner ? watching : home,
+     title: () => title(arg) }[page] || home)();
+}
+window.addEventListener("hashchange", () => me && route());
+if (navigator.serviceWorker) navigator.serviceWorker.addEventListener("message", (e) => { if (e.data && e.data.page) location.hash = e.data.page; });
+
+async function start() {
+  const pin = new URLSearchParams(location.search).get("pin");
+  if (pin) { $("signin").classList.remove("hidden"); if (!(await finishSignIn(pin))) return; }
+  const r = await fetch("/api/me", { credentials: "same-origin" });
+  if (!r.ok) return showSignIn();
+  me = await r.json();
+  $("signin").classList.add("hidden"); $("app").classList.remove("hidden");
+  if (me.owner) {                                   // owner: Requests, Watching, Members instead of My requests / Profile
+    $("approvalsTab").classList.remove("hidden"); $("watchTab").classList.remove("hidden");
+    document.querySelector('#tabs a[data-tab="requests"]').classList.add("hidden");
+    $("profileTab").lastChild.textContent = "Members";
+    $("tabs").style.gridTemplateColumns = "repeat(5, minmax(0,1fr))";
+    api("/api/all-requests").then(r => r.json()).then(d => paintBadge(d.pending.length)).catch(() => {});
+    api("/api/watching").then(r => r.json()).then(l => paintWatch(l.length)).catch(() => {});
+  }
+  route();
+}
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+setInterval(() => { if (me && !document.hidden) fetch("/api/ping", { method: "POST", credentials: "same-origin" }).catch(() => {}); }, 60000);
+start();
+</script>
+</body>
+</html>

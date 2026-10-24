@@ -1,0 +1,2 @@
+aiohttp>=3.9
+pywebpush>=2.0
