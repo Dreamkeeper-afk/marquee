@@ -20,8 +20,9 @@
 
 ## See it in action
 
+https://github.com/user-attachments/assets/a87c404e-4743-41a5-a29a-4a4943369322
+
 <p align="center">
-  <a href="docs/marquee-demo.mp4"><img src="docs/marquee-demo-thumb.jpg" width="720" alt="Watch the 45-second Marquee demo"></a><br>
   <sub>A 45-second walkthrough: sign in, recommendations, search and requests, then the owner's approvals, Who's watching and Members.
   Shown with a demo library - every title, poster and member is made up.</sub>
 </p>
