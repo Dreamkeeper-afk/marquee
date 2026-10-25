@@ -14,6 +14,18 @@
   <em>Sign in with Plex · Real search · Requests with approvals · Personal recommendations · Who's watching · Push notifications</em>
 </p>
 
+<p align="center">
+  <img src="docs/marquee-mockup.png" alt="Marquee on three phones: a title page with every edition, the home screen with personal picks, and one-tap request approvals">
+</p>
+
+## See it in action
+
+<p align="center">
+  <a href="docs/marquee-demo.mp4"><img src="docs/marquee-demo-thumb.jpg" width="720" alt="Watch the 45-second Marquee demo"></a><br>
+  <sub>A 45-second walkthrough: sign in, recommendations, search and requests, then the owner's approvals, Who's watching and Members.
+  Shown with a demo library - every title, poster and member is made up.</sub>
+</p>
+
 ---
 
 ## Why Marquee?
